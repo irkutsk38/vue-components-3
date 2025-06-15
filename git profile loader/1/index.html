@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <title>Vue 3 Components Demo с вводом пользователя</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f9f9f9;
+            padding: 20px;
+        }
+
+        #app {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.1);
+        }
+
+        .user-card {
+            border: 1px solid #ccc;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 6px;
+            background-color: #fdfdfd;
+            overflow: hidden;
+        }
+
+            .user-card img {
+                float: left;
+                margin-right: 15px;
+                border-radius: 50%;
+                width: 100px;
+                height: 100px;
+                object-fit: cover;
+            }
+
+        .notification {
+            border: 1px solid #ccc;
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            position: relative;
+            font-weight: 600;
+        }
+
+            .notification.success {
+                background-color: #e0f8e0;
+                border-color: #6fc36f;
+                color: #2b662b;
+            }
+
+            .notification.error {
+                background-color: #f8e0e0;
+                border-color: #c36f6f;
+                color: #662b2b;
+            }
+
+            .notification button {
+                position: absolute;
+                right: 10px;
+                top: 8px;
+                background: transparent;
+                border: none;
+                font-size: 20px;
+                cursor: pointer;
+                color: inherit;
+                font-weight: bold;
+                line-height: 1;
+            }
+
+        form {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        button[type="submit"] {
+            padding: 8px 16px;
+            font-size: 16px;
+            border: none;
+            background-color: #42b983;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+            button[type="submit"]:hover {
+                background-color: #36976d;
+            }
+    </style>
+</head>
+<body>
+
+    <div id="app">
+        <h1>Vue 3 Components Demo (Options API)</h1>
+
+        <form @submit.prevent="loadUser">
+            <input type="text"
+                   v-model.trim="inputUsername"
+                   placeholder="Введите GitHub имя пользователя"
+                   aria-label="GitHub username"
+                   required />
+            <button type="submit">Загрузить профиль</button>
+        </form>
+
+        <notification-message v-if="notificationMessage"
+                              :type="notificationType"
+                              :message="notificationMessage"
+                              @close="notificationMessage = ''"></notification-message>
+
+        <user-profile v-if="currentUsername"
+                      :username="currentUsername"
+                      @notify="handleNotification"></user-profile>
+    </div>
+
+    <script>
+  const { createApp } = Vue
+
+  const NotificationMessage = {
+    name: 'NotificationMessage',
+    props: ['type', 'message'],
+    template: `
+      <div class="notification" :class="type">
+        {{ type.toUpperCase() }}: {{ message }}
+        <button @click="$emit('close')">&times;</button>
+      </div>
+    `
+  }
+
+  const UserProfile = {
+    name: 'UserProfile',
+    props: ['username'],
+    data() {
+      return {
+        user: null,
+        loading: false,
+        error: null
+      }
+    },
+    mounted() {
+      this.fetchUser()
+    },
+    watch: {
+      username(newVal, oldVal) {
+        if (newVal !== oldVal) {
+          this.fetchUser()
+        }
+      }
+    },
+    methods: {
+      async fetchUser() {
+        this.loading = true
+        this.error = null
+        this.user = null
+        try {
+          const res = await fetch(`https://api.github.com/users/${this.username}`)
+          if (!res.ok) throw new Error('Пользователь не найден')
+          this.user = await res.json()
+          this.$emit('notify', `Профиль ${this.username} загружен`, 'success')
+        } catch (err) {
+          this.error = err.message
+          this.$emit('notify', err.message, 'error')
+        } finally {
+          this.loading = false
+        }
+      }
+    },
+    template: `
+      <div class="user-card">
+        <div v-if="loading">Загрузка...</div>
+        <div v-else-if="error">Ошибка: {{ error }}</div>
+        <div v-else-if="user">
+          <img :src="user.avatar_url" alt="avatar" />
+          <strong>{{ user.name || user.login }}</strong><br />
+          <p>{{ user.bio || 'Нет описания' }}</p>
+          <a :href="user.html_url" target="_blank" rel="noopener">GitHub профиль</a>
+        </div>
+      </div>
+    `
+  }
+
+  createApp({
+    components: {
+      UserProfile,
+      NotificationMessage
+    },
+    data() {
+      return {
+        inputUsername: '',
+        currentUsername: '',
+        notificationMessage: '',
+        notificationType: 'success'
+      }
+    },
+    methods: {
+      loadUser() {
+        this.currentUsername = this.inputUsername
+        this.notificationMessage = ''
+      },
+      handleNotification(msg, type) {
+        this.notificationMessage = msg
+        this.notificationType = type
+      }
+    }
+  }).mount('#app')
+    </script>
+
+</body>
+</html>
+
+
+

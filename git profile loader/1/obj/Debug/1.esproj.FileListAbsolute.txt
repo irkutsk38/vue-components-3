@@ -1,0 +1,5 @@
+C:\Users\admin\source\repos\1\1\obj\Debug\1.esproj.CoreCompileInputs.cache
+D:\solutions\1\1\obj\Debug\1.esproj.CoreCompileInputs.cache
+D:\solutions\счетчик\1\obj\Debug\1.esproj.CoreCompileInputs.cache
+D:\projects\счетчик\1\obj\Debug\1.esproj.CoreCompileInputs.cache
+D:\projects\git profile\1\obj\Debug\1.esproj.CoreCompileInputs.cache
